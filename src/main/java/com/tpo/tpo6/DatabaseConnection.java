@@ -54,35 +54,38 @@ public final class DatabaseConnection {
     private String createQuery(Map<String, String> filters, String sortBy, String sortOrder) {
         StringBuilder query = new StringBuilder(
                 "SELECT i.symbol, i.name as instrument_name,\n" +
-                        "                            it.type_name as type_name, e.name as exchange_name, " +
-                        "e.country as exchange_country, c.name as currency, hp.price, hp.volume" +
+                        "                            e.name as exchange_name, " +
+                        "e.country as exchange_country, c.name as currency, hp.price, hp.volume, i.logo" +
                         "                            FROM instruments i" +
                         "                            JOIN instrument_types it ON i.type_id = it.id" +
-                        "                            JOIN exchanges e ON i.exchange_id = e.id" +
+                        "                            LEFT JOIN exchanges e ON i.exchange_id = e.id" +
                         "                            JOIN currencies c ON i.currency_id = c.id" +
                         "                            JOIN historical_prices hp ON i.id = hp.instrument_id" +
                         "                            WHERE hp.date = (SELECT MAX(date) FROM historical_prices)");
 
         for (Map.Entry<String, String> filter : filters.entrySet()) {
-            switch (filter.getKey()) {
-                case "instrument_name":
-                    query.append(" AND i.name ILIKE ?");
-                    break;
-                case "symbol":
-                    query.append(" AND i.symbol ILIKE ?");
-                    break;
-                case "exchange_name":
-                    query.append(" AND e.name ILIKE ?");
-                    break;
-                case "type_name":
-                    query.append(" AND it.type_name ILIKE ?");
-                    break;
-                case "exchange_country":
-                    query.append(" AND e.country ILIKE ?");
-                    break;
+            String filterKey = filter.getKey();
+            if (!filterKey.isEmpty()) {
+                switch (filterKey) {
+                    case "instrument_name":
+                        query.append(" AND i.name ILIKE ?");
+                        break;
+                    case "symbol":
+                        query.append(" AND i.symbol ILIKE ?");
+                        break;
+                    case "exchange_name":
+                        query.append(" AND (e.name ILIKE ? OR e.country IS NULL)");
+                        break;
+                    case "type_name":
+                        query.append(" AND it.type_name ILIKE ?");
+                        break;
+                    case "exchange_country":
+                        query.append(" AND (e.country ILIKE ? OR e.country IS NULL)");
+                        break;
 
-                default:
-                    query.append("");
+                    default:
+                        query.append("");
+                }
             }
         }
 
@@ -123,12 +126,12 @@ public final class DatabaseConnection {
                 InstrumentExchangeTypePriceDTO response = new InstrumentExchangeTypePriceDTO(
                         rs.getString("symbol"),
                         rs.getString("instrument_name"),
-                        rs.getString("type_name"),
                         rs.getString("exchange_name"),
                         rs.getString("exchange_country"),
                         rs.getString("currency"),
                         rs.getDouble("price"),
-                        rs.getInt("volume")
+                        rs.getLong("volume"),
+                        rs.getBytes("logo")
                 );
                 instruments.add(response);
             }
@@ -144,10 +147,10 @@ public final class DatabaseConnection {
     public static void main(String[] args) {
         DatabaseConnection dbConn = DatabaseConnection.getSingleInstance();
         Map<String, String> filters = new HashMap<>();
-        filters.put("instrument_name", "Apple");
+        filters.put("type_name", "cryptocurrency");
         //filters.put("exchange_country", "USA");
-
-        String sortBy = "volume";
+//
+        String sortBy = "";
         String sortOrder = "";
 
         List<InstrumentExchangeTypePriceDTO> instruments = dbConn.getFinancialInstruments(filters, sortBy, sortOrder);
