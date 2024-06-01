@@ -16,71 +16,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
           integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
           crossorigin="anonymous" referrerpolicy="no-referrer"/>
-    <link href="styles.css" rel="stylesheet">
-    <style>
-        body {
-            font-family: "Sora", sans-serif;
-        }
-
-        .bg-mainblue-100 {
-            background-color: #EDE8F5;
-        }
-
-        .bg-mainblue-200 {
-            background-color: #ADBBDA;
-        }
-
-        .bg-mainblue-300 {
-            background-color: #8697c4;
-        }
-
-        .bg-mainblue-400 {
-            background-color: #7091e6;
-        }
-
-        .bg-mainblue-500 {
-            background-color: #06111F;
-        }
-
-        .rounded-main {
-            border-radius: 40px;
-        }
-
-        .text-color-main-dark {
-            color: #3D52A0;
-        }
-
-        .text-color-main-light {
-            color: #EDE8F5;
-        }
-
-        @keyframes bgGradient {
-            0% {
-                background-position: 0% 50%;
-            }
-            100% {
-                background-position: 100% 50%;
-            }
-        }
-
-        .hover-bg-gradient {
-            background: linear-gradient(to right, #7091e6, #06111F);
-            background-size: 200% 200%;
-            transition: background-position 0.5s ease-in-out;
-        }
-
-        .hover-bg-gradient:hover {
-            background-position: 100% 50%;
-        }
-    </style>
+    <link href="${pageContext.request.contextPath}/css/global_styles.css" rel="stylesheet">
 </head>
 <body class="bg-mainblue-100">
 <main class="flex flex-col items-center w-full">
-    <!-- Header -->
-    <div class="bg-mainblue-500 text-white p-10 rounded-main w-11/12 mt-10 mb-5 text-center">
-        <h1 class="text-5xl font-bold">Financial Instruments</h1>
+    <div class="bg-mainblue-500 text-white p-10 rounded-main w-11/12 mt-10 mb-5 flex items-center justify-between">
+        <a href="index.jsp" class="text-4xl hover-icon">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h1 class="text-5xl font-bold flex-grow text-center">Financial Instruments</h1>
+        <div class="w-12"></div>
     </div>
-    <form action="tpo-servlet" method="get" class="">
+    <form action="instruments" method="get" class="">
         <div class="flex flex-col gap-y-3 text-color-main-dark">
             <div class="flex justify-around gap-x-5">
                 <div class="flex flex-col">
@@ -115,7 +62,7 @@
                     </select>
                 </div>
                 <div class="flex flex-col">
-                    <label for="exchange_country" class="mb-2">Exchange Name</label>
+                    <label for="exchange_country" class="mb-2">Exchange Country</label>
                     <select id="exchange_country" name="exchange_country" class="p-2 rounded">
                         <option value="">Select</option>
                         <option value="poland">Poland</option>
@@ -160,47 +107,49 @@
             <div class="w-1/7">Volume</div>
         </div>
         <hr class="mb-4">
-        <div class="space-y-4">
+        <div>
             <% for (InstrumentExchangeTypePriceDTO instrument : financialInstruments) { %>
-            <div class="flex justify-around text-center cursor-pointer bg-mainblue-400 rounded-main p-5 text-white items-center hover-bg-gradient">
-                <div class="w-1/6">
-                    <% if (instrument.logo() != null) { %>
-                    <img src="data:image/png;base64,
+            <a href="${pageContext.request.contextPath}/instruments/<%= instrument.symbol() %>">
+                <div class="flex mb-5 justify-around text-center cursor-pointer bg-mainblue-400 rounded-main p-5 text-white items-center hover-bg-gradient">
+                    <div class="w-1/6">
+                        <% if (instrument.logo() != null) { %>
+                        <img src="data:image/png;base64,
                         <%= Base64.getEncoder().encodeToString(instrument.logo()) %>"
-                         alt="<%= instrument.symbol() %> logo" class="h-12 w-12 mx-auto rounded-xl">
+                             alt="<%= instrument.symbol() %> logo" class="h-12 w-12 mx-auto rounded-xl">
+                        <% } else { %>
+                        <p>No logo available</p>
+                        <% } %>
+                    </div>
+                    <div class="w-1/6"><p class="text-xl"><%= instrument.symbol() %>
+                    </p></div>
+                    <div class="w-1/6"><p class="text-xl"><%= instrument.instrumentName() %>
+                    </p></div>
+
+                    <% if (instrument.exchangeName() != null) { %>
+                    <div class="w-1/6"><p class="text-xl"><%= instrument.exchangeName() %>
+                    </p></div>
                     <% } else { %>
-                    <p>No logo available</p>
+                    <div class="w-1/6"><p class="text-xl">none</p></div>
                     <% } %>
+
+                    <% if (instrument.exchangeName() != null) { %>
+                    <div class="w-1/6"><p class="text-xl"><%= instrument.exchangeCountry() %>
+                    </p></div>
+                    <% } else { %>
+                    <div class="w-1/6"><p class="text-xl">none</p></div>
+                    <% } %>
+
+                    <% NumberFormat numberFormat = NumberFormat.getNumberInstance(request.getLocale());%>
+                    <div class="w-1/6"><p
+                            class="text-xl"><%= numberFormat.format(instrument.price()) + " " + instrument.currency() %>
+                    </p></div>
+                    <div class="w-1/6"><p
+                            class="text-xl"><%= numberFormat.format(instrument.volume()) + " " + instrument.currency() %>
+                    </p></div>
                 </div>
-                <div class="w-1/6"><p class="text-xl"><%= instrument.symbol() %>
-                </p></div>
-                <div class="w-1/6"><p class="text-xl"><%= instrument.instrumentName() %>
-                </p></div>
-
-                <% if (instrument.exchangeName() != null) { %>
-                <div class="w-1/6"><p class="text-xl"><%= instrument.exchangeName() %>
-                </p></div>
-                <% } else { %>
-                <div class="w-1/6"><p class="text-xl">none</p></div>
-                <% } %>
-
-                <% if (instrument.exchangeName() != null) { %>
-                <div class="w-1/6"><p class="text-xl"><%= instrument.exchangeCountry() %>
-                </p></div>
-                <% } else { %>
-                <div class="w-1/6"><p class="text-xl">none</p></div>
-                <% } %>
-
-                <% NumberFormat numberFormat = NumberFormat.getNumberInstance(request.getLocale());%>
-                <div class="w-1/6"><p
-                        class="text-xl"><%= numberFormat.format(instrument.price()) + " " + instrument.currency() %>
-                </p></div>
-                <div class="w-1/6"><p
-                        class="text-xl"><%= numberFormat.format(instrument.volume()) + " " + instrument.currency() %>
-                </p></div>
-            </div>
-            <% } %>
+                    <% } %>
         </div>
+        </a>
         <% } else { %>
         <p class="text-center text-2xl text-mainblue-500">No financial instruments found.</p>
         <% } %>

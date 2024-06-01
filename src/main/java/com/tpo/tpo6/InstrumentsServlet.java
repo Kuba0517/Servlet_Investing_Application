@@ -12,8 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@WebServlet(value = "/tpo-servlet")
-public class TpoServlet extends HttpServlet {
+@WebServlet(value = "/instruments")
+public class InstrumentsServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
@@ -30,6 +30,7 @@ public class TpoServlet extends HttpServlet {
         );
 
         request.setAttribute("financialInstruments", financialInstruments);
+        // do testu1
         request.setAttribute("map", filters);
         request.setAttribute("sortBy", sortBy);
         request.setAttribute("sortOrder", sortOrder);

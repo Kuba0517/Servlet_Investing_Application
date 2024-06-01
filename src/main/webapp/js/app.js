@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("super")
     const counters = document.querySelectorAll('h1[data-target]');
 
     counters.forEach(counter => {
@@ -22,12 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCount();
     });
 
-    // gsap.from("nav", { duration: 1, y: -50, opacity: 0, ease: "power2.out" });
-    // gsap.from("#hero", { duration: 1, y: 50, opacity: 0, ease: "power2.out", delay: 0.5 });
-    // gsap.from("footer", { duration: 1, y: 50, opacity: 0, ease: "power2.out", delay: 1 });
 
     gsap.from(".grid > div", {
-        duration: 1,
+        duration: 0.7,
         y: -50,
         opacity: 0,
         ease: "power2.out",
@@ -35,3 +33,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 });
+
+
+const investButton = document.getElementById("invest_button");
+const investmentForm = document.getElementById("investment_form");
+
+investButton.addEventListener("click", () => {
+    investmentForm.scrollIntoView({ behavior: "smooth" });
+
+    gsap.fromTo(investmentForm,
+        { scale: 1 },
+        { scale: 1.1, repeat: 5, yoyo: true, duration: 0.2 }
+    );
+});
+
+const reviewsButton = document.getElementById("reviews_button");
+const reviews = document.getElementById("reviews");
+
+reviewsButton.addEventListener("click", () => {
+    reviews.scrollIntoView({ behavior: "smooth" });
+})

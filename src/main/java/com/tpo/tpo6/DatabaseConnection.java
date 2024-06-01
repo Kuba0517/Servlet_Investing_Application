@@ -1,11 +1,14 @@
 package com.tpo.tpo6;
 
+import com.tpo.tpo6.DTO.InstrumentDetailsDTO;
 import com.tpo.tpo6.DTO.InstrumentExchangeTypePriceDTO;
+import com.tpo.tpo6.models.HistoricalPrice;
 import com.tpo.tpo6.models.Instrument;
 import com.tpo.tpo6.models.InstrumentType;
 import com.tpo.tpo6.models.StockExchange;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,7 +68,7 @@ public final class DatabaseConnection {
 
         for (Map.Entry<String, String> filter : filters.entrySet()) {
             String filterKey = filter.getKey();
-            if (!filterKey.isEmpty()) {
+            if (!filter.getValue().isEmpty()) {
                 switch (filterKey) {
                     case "instrument_name":
                         query.append(" AND i.name ILIKE ?");
@@ -74,13 +77,13 @@ public final class DatabaseConnection {
                         query.append(" AND i.symbol ILIKE ?");
                         break;
                     case "exchange_name":
-                        query.append(" AND (e.name ILIKE ? OR e.country IS NULL)");
+                        query.append(" AND e.name ILIKE ?");
                         break;
                     case "type_name":
                         query.append(" AND it.type_name ILIKE ?");
                         break;
                     case "exchange_country":
-                        query.append(" AND (e.country ILIKE ? OR e.country IS NULL)");
+                        query.append(" AND e.country ILIKE ?");
                         break;
 
                     default:
@@ -88,6 +91,14 @@ public final class DatabaseConnection {
                 }
             }
         }
+
+//        if (!filters.containsKey("exchange_name")) {
+//            query.append(" AND e.name IS NOT NULL");
+//        }
+//
+//        if (!filters.containsKey("exchange_country")) {
+//            query.append(" AND e.country IS NOT NULL");
+//        }
 
         if (!sortBy.isEmpty()) {
             query.append(" ORDER BY ");
@@ -110,9 +121,12 @@ public final class DatabaseConnection {
     private void setParameters(PreparedStatement stmt, Map<String, String> filters) throws SQLException {
         int index = 1;
         for (Map.Entry<String, String> filter : filters.entrySet()) {
-            stmt.setString(index++, "%" + filter.getValue() + "%");
+            if (!filter.getValue().isEmpty()) {
+                stmt.setString(index++, "%" + filter.getValue() + "%");
+            }
         }
     }
+
 
     public List<InstrumentExchangeTypePriceDTO> getFinancialInstruments(Map<String, String> filters, String sortBy, String sortOrder) {
         List<InstrumentExchangeTypePriceDTO> instruments = new ArrayList<>();
@@ -121,21 +135,21 @@ public final class DatabaseConnection {
             String query = createQuery(filters, sortBy, sortOrder);
             PreparedStatement stmt = conn.prepareStatement(query);
             setParameters(stmt, filters);
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
+            ResultSet resultSet = stmt.executeQuery();
+            while (resultSet.next()) {
                 InstrumentExchangeTypePriceDTO response = new InstrumentExchangeTypePriceDTO(
-                        rs.getString("symbol"),
-                        rs.getString("instrument_name"),
-                        rs.getString("exchange_name"),
-                        rs.getString("exchange_country"),
-                        rs.getString("currency"),
-                        rs.getDouble("price"),
-                        rs.getLong("volume"),
-                        rs.getBytes("logo")
+                        resultSet.getString("symbol"),
+                        resultSet.getString("instrument_name"),
+                        resultSet.getString("exchange_name"),
+                        resultSet.getString("exchange_country"),
+                        resultSet.getString("currency"),
+                        resultSet.getDouble("price"),
+                        resultSet.getLong("volume"),
+                        resultSet.getBytes("logo")
                 );
                 instruments.add(response);
             }
-            rs.close();
+            resultSet.close();
             stmt.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -143,19 +157,65 @@ public final class DatabaseConnection {
         return instruments;
     }
 
+    public InstrumentDetailsDTO getInstrumentDetailsBySymbol(String symbol) {
+        String query = "SELECT i.symbol, i.name AS instrument_name, " +
+                "e.name AS exchange_name, e.country AS exchange_country, " +
+                "c.name AS currency, i.logo, hp.date, hp.price, hp.volume, i.logo " +
+                "FROM instruments i " +
+                "JOIN instrument_types it ON i.type_id = it.id " +
+                "LEFT JOIN exchanges e ON i.exchange_id = e.id " +
+                "JOIN currencies c ON i.currency_id = c.id " +
+                "JOIN historical_prices hp ON i.id = hp.instrument_id " +
+                "WHERE i.symbol LIKE ? ";
+
+        try {
+            Connection connection = getConnection();
+            PreparedStatement stmt = connection.prepareStatement(query);
+
+            stmt.setString(1, symbol);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    byte[] logo = rs.getBytes("logo");
+                    String sym = rs.getString("symbol");
+                    String instrumentName = rs.getString("instrument_name");
+                    String exchangeName = rs.getString("exchange_name");
+                    String exchangeCountry = rs.getString("exchange_country");
+                    String currency = rs.getString("currency");
+
+                    List<HistoricalPrice> prices = new ArrayList<>();
+                    do {
+                        LocalDate date = rs.getDate("date").toLocalDate();
+                        double price = rs.getDouble("price");
+                        long volume = rs.getLong("volume");
+                        prices.add(new HistoricalPrice(date, price, volume));
+                    } while (rs.next());
+
+                    return new InstrumentDetailsDTO(logo,sym, instrumentName, exchangeName, exchangeCountry, currency, prices);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
 
     public static void main(String[] args) {
         DatabaseConnection dbConn = DatabaseConnection.getSingleInstance();
-        Map<String, String> filters = new HashMap<>();
-        filters.put("type_name", "cryptocurrency");
-        //filters.put("exchange_country", "USA");
+//        Map<String, String> filters = new HashMap<>();
+//        filters.put("type_name", "cryptocurrency");
+//        //filters.put("exchange_country", "USA");
+////
+//        String sortBy = "";
+//        String sortOrder = "";
 //
-        String sortBy = "";
-        String sortOrder = "";
+//        List<InstrumentExchangeTypePriceDTO> instruments = dbConn.getFinancialInstruments(filters, sortBy, sortOrder);
+//        for (InstrumentExchangeTypePriceDTO instrument : instruments) {
+//            System.out.println(instrument);
+//    }
+//        InstrumentDetailsDTO dto = dbConn.getInstrumentDetailsBySymbol("TSLA");
+//        System.out.println(dto);
 
-        List<InstrumentExchangeTypePriceDTO> instruments = dbConn.getFinancialInstruments(filters, sortBy, sortOrder);
-        for (InstrumentExchangeTypePriceDTO instrument : instruments) {
-            System.out.println(instrument);
-        }
     }
 }

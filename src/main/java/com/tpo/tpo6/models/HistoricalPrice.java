@@ -1,10 +1,9 @@
 package com.tpo.tpo6.models;
 
-import java.sql.Date;
+import java.time.LocalDate;
 
 public record HistoricalPrice(
-        int instrumentId,
-        Date date,
+        LocalDate date,
         double price,
         long volume
 ) {}

@@ -1,0 +1,63 @@
+body {
+    font-family: "Sora", sans-serif;
+}
+
+.bg-mainblue-100 {
+    background-color: #EDE8F5;
+}
+
+.bg-mainblue-200 {
+    background-color: #ADBBDA;
+}
+
+.bg-mainblue-300 {
+    background-color: #8697c4;
+}
+
+.bg-mainblue-400 {
+    background-color: #7091e6;
+}
+
+.bg-mainblue-500 {
+    background-color: #06111F;
+}
+
+.rounded-main {
+    border-radius: 40px;
+}
+
+.text-color-main-dark {
+    color: #3D52A0;
+}
+
+.text-color-main-light {
+    color: #EDE8F5;
+}
+
+@keyframes bgGradient {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 100% 50%;
+    }
+}
+
+.hover-bg-gradient {
+    background: linear-gradient(to right, #7091e6, #06111F);
+    background-size: 200% 200%;
+    transition: background-position 0.5s ease-in-out;
+}
+
+.hover-bg-gradient:hover {
+    background-position: 100% 50%;
+}
+
+.hover-icon {
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.hover-icon:hover {
+    color: #7091e6;
+    transform: scale(1.2);
+}
